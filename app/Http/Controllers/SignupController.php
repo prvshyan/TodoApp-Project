@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Models\User;
 
 class SignupController extends Controller
@@ -21,10 +22,12 @@ class SignupController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        $token = JWTAuth::fromUser($user);
+
         return response()->json([
             'message' => 'User registered successfully!',
             'user' => $user,
-        ]);
+            'token' => $token,
+        ], 201);
     }
 }
-
