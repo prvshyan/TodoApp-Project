@@ -1,37 +1,40 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
+    /**
+     * Login method
+     */
     public function login(Request $request)
     {
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
-        if (!$token = JWTAuth::attempt($credentials)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+            return redirect('/tasks')->with('success', 'Login successful!');
         }
-        return response()->json([
-            'message' => 'Login successful',
-            'token' => $token,
-            'user' => JWTAuth::user(),
-        ]);
+
+        return redirect('/login-form')->withErrors(['email' => 'Invalid credentials']);
     }
-    public function logout()
+
+    /**
+     * Logout method
+     */
+    public function logout(Request $request)
     {
-        try {
-            JWTAuth::invalidate(JWTAuth::getToken());
-            return response()->json(['message' => 'Logged out successfully']);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to logout'], 500);
-        }
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/login-form')->with('success', 'Logged out successfully!');
     }
-
 }
-
