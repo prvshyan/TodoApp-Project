@@ -7,6 +7,7 @@ use App\Models\Task;
 
 class TaskController extends Controller
 {
+
     public function index()
     {
         if (!auth()->check()) {
@@ -14,9 +15,9 @@ class TaskController extends Controller
         }
 
         $tasks = auth()->user()->tasks ?? [];
-
         return view('index', compact('tasks'));
     }
+
 
     public function store(Request $request)
     {
@@ -34,12 +35,9 @@ class TaskController extends Controller
         return redirect('/tasks')->with('success', 'Task created successfully!');
     }
 
+
     public function update(Request $request, Task $task)
     {
-        $request->validate([
-            'completed' => 'required|boolean',
-        ]);
-
         if ($task->user_id !== auth()->id()) {
             return redirect('/tasks')->withErrors(['error' => 'You do not have permission to update this task.']);
         }
@@ -51,6 +49,7 @@ class TaskController extends Controller
         return redirect('/tasks')->with('success', 'Task updated successfully!');
     }
 
+
     public function destroy(Task $task)
     {
         if ($task->user_id !== auth()->id()) {
@@ -58,7 +57,22 @@ class TaskController extends Controller
         }
 
         $task->delete();
-
         return redirect('/tasks')->with('success', 'Task deleted successfully!');
+    }
+
+    public function edit(Request $request, Task $task)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        if ($task->user_id !== auth()->id()) {
+            return redirect('/tasks')->withErrors(['error' => 'You do not have permission to edit this task.']);
+        }
+
+        $task->update($request->only('name', 'description'));
+
+        return redirect('/tasks')->with('success', 'Task updated successfully!');
     }
 }

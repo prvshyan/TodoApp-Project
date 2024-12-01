@@ -22,7 +22,7 @@
 @endif
 
 <h2>Your Tasks</h2>
-<table>
+<table border="1" cellpadding="10">
     <thead>
     <tr>
         <th>Name</th>
@@ -38,7 +38,8 @@
             <td>{{ $task->description }}</td>
             <td>{{ $task->completed ? 'Yes' : 'No' }}</td>
             <td>
-                <form action="/tasks/{{ $task->id }}" method="POST">
+                <!-- فرم تغییر وضعیت تکمیل -->
+                <form action="/tasks/{{ $task->id }}" method="POST" style="display:inline;">
                     @csrf
                     @method('PUT')
                     <input type="hidden" name="completed" value="{{ $task->completed ? 0 : 1 }}">
@@ -47,10 +48,18 @@
                     </button>
                 </form>
 
-                <form action="/tasks/{{ $task->id }}" method="POST">
+                <form action="/tasks/{{ $task->id }}/edit" method="POST" style="display:inline;">
+                    @csrf
+                    @method('PUT')
+                    <input type="text" name="name" value="{{ $task->name }}" required>
+                    <textarea name="description">{{ $task->description }}</textarea>
+                    <button type="submit" style="background-color: orange;">Edit</button>
+                </form>
+
+                <form action="/tasks/{{ $task->id }}" method="POST" style="display:inline;">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" style="background-color: red;">Delete</button>
+                    <button type="submit" style="background-color: red; color: white;">Delete</button>
                 </form>
             </td>
         </tr>
