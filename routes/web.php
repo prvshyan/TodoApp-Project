@@ -7,7 +7,12 @@ use App\Http\Controllers\SignupController;
 Route::get('/', function () {
     return view('welcome');
 });
-Route::post('/signup', [SignupController::class, 'signup']);
+Route::post('/register', [SignupController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-
+Route::get('/login-form',function (){
+    return view('login');
+});
+Route::get('/signup-form',function (){
+    return view('signup');
+});
 
