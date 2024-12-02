@@ -14,10 +14,11 @@ class TaskController extends Controller
             return redirect('/login-form')->withErrors(['error' => 'Please log in to access tasks.']);
         }
 
-        $tasks = auth()->user()->tasks ?? [];
-        return view('index', compact('tasks'));
-    }
+        $incompleteTasks = auth()->user()->tasks()->where('completed', false)->get();
+        $completedTasks = auth()->user()->tasks()->where('completed', true)->get();
 
+        return view('index', compact('incompleteTasks', 'completedTasks'));
+    }
 
     public function store(Request $request)
     {
@@ -38,13 +39,17 @@ class TaskController extends Controller
 
     public function update(Request $request, Task $task)
     {
+        $request->validate([
+            'name' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'completed' => 'required|boolean',
+        ]);
+
         if ($task->user_id !== auth()->id()) {
             return redirect('/tasks')->withErrors(['error' => 'You do not have permission to update this task.']);
         }
 
-        $task->update([
-            'completed' => $request->completed,
-        ]);
+        $task->update($request->only('name', 'description', 'completed'));
 
         return redirect('/tasks')->with('success', 'Task updated successfully!');
     }
@@ -57,22 +62,19 @@ class TaskController extends Controller
         }
 
         $task->delete();
+
         return redirect('/tasks')->with('success', 'Task deleted successfully!');
     }
-
-    public function edit(Request $request, Task $task)
+    public function toggleStatus(Task $task)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-        ]);
-
         if ($task->user_id !== auth()->id()) {
-            return redirect('/tasks')->withErrors(['error' => 'You do not have permission to edit this task.']);
+            return redirect('/tasks')->withErrors(['error' => 'You do not have permission to update this task.']);
         }
 
-        $task->update($request->only('name', 'description'));
+        $task->completed = !$task->completed;
+        $task->save();
 
-        return redirect('/tasks')->with('success', 'Task updated successfully!');
+        return redirect('/tasks')->with('success', 'Task status updated successfully!');
     }
+
 }
