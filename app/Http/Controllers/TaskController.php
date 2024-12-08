@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -7,74 +6,73 @@ use App\Models\Task;
 
 class TaskController extends Controller
 {
+// لیست تسک‌ها
+public function index(Request $request)
+{
+$tasks = $request->user()->tasks;
 
-    public function index()
-    {
-        if (!auth()->check()) {
-            return redirect('/login-form')->withErrors(['error' => 'Please log in to access tasks.']);
-        }
+return response()->json([
+'incompleteTasks' => $tasks->where('completed', false),
+'completedTasks' => $tasks->where('completed', true),
+]);
+}
 
-        $incompleteTasks = auth()->user()->tasks()->where('completed', false)->get();
-        $completedTasks = auth()->user()->tasks()->where('completed', true)->get();
+// ذخیره تسک جدید
+public function store(Request $request)
+{
+$request->validate([
+'name' => 'required|string|max:255',
+'description' => 'nullable|string',
+]);
 
-        return view('index', compact('incompleteTasks', 'completedTasks'));
-    }
+$task = $request->user()->tasks()->create([
+'name' => $request->name,
+'description' => $request->description,
+'completed' => false,
+]);
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-        ]);
+return response()->json(['message' => 'Task created successfully', 'task' => $task], 201);
+}
 
-        auth()->user()->tasks()->create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'completed' => false,
-        ]);
+// به‌روزرسانی تسک
+public function update(Request $request, Task $task)
+{
+if ($task->user_id !== $request->user()->id) {
+return response()->json(['message' => 'Unauthorized'], 403);
+}
 
-        return redirect('/tasks')->with('success', 'Task created successfully!');
-    }
+$request->validate([
+'name' => 'required|string|max:255',
+'description' => 'nullable|string',
+'completed' => 'required|boolean',
+]);
 
+$task->update($request->only('name', 'description', 'completed'));
 
-    public function update(Request $request, Task $task)
-    {
-        $request->validate([
-            'name' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'completed' => 'required|boolean',
-        ]);
+return response()->json(['message' => 'Task updated successfully', 'task' => $task], 200);
+}
 
-        if ($task->user_id !== auth()->id()) {
-            return redirect('/tasks')->withErrors(['error' => 'You do not have permission to update this task.']);
-        }
+// تغییر وضعیت تسک
+public function toggleStatus(Request $request, Task $task)
+{
+if ($task->user_id !== $request->user()->id) {
+return response()->json(['message' => 'Unauthorized'], 403);
+}
 
-        $task->update($request->only('name', 'description', 'completed'));
+$task->update(['completed' => !$task->completed]);
 
-        return redirect('/tasks')->with('success', 'Task updated successfully!');
-    }
+return response()->json(['message' => 'Task status updated successfully', 'task' => $task], 200);
+}
 
+// حذف تسک
+public function destroy(Request $request, Task $task)
+{
+if ($task->user_id !== $request->user()->id) {
+return response()->json(['message' => 'Unauthorized'], 403);
+}
 
-    public function destroy(Task $task)
-    {
-        if ($task->user_id !== auth()->id()) {
-            return redirect('/tasks')->withErrors(['error' => 'You do not have permission to delete this task.']);
-        }
+$task->delete();
 
-        $task->delete();
-
-        return redirect('/tasks')->with('success', 'Task deleted successfully!');
-    }
-    public function toggleStatus(Task $task)
-    {
-        if ($task->user_id !== auth()->id()) {
-            return redirect('/tasks')->withErrors(['error' => 'You do not have permission to update this task.']);
-        }
-
-        $task->completed = !$task->completed;
-        $task->save();
-
-        return redirect('/tasks')->with('success', 'Task status updated successfully!');
-    }
-
+return response()->json(['message' => 'Task deleted successfully'], 200);
+}
 }
