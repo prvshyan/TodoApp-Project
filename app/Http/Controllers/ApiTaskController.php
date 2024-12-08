@@ -7,10 +7,19 @@ use App\Models\Task;
 
 class ApiTaskController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $tasks = auth()->user()->tasks()->get();
-        return response()->json(['tasks' => $tasks], 200);
+        $search = $request->query('search');
+        $perPage = $request->query('per_page', 10);
+
+        $tasks = auth()->user()->tasks()
+            ->when($search, function ($query, $search) {
+                $query->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('description', 'like', '%' . $search . '%');
+            })
+            ->paginate($perPage);
+
+        return response()->json($tasks, 200);
     }
 
     public function store(Request $request)

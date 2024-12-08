@@ -13,4 +13,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/tasks/{task}', [ApiTaskController::class, 'update'])->name('api.tasks.update');
     Route::delete('/tasks/{task}', [ApiTaskController::class, 'destroy'])->name('api.tasks.destroy');
     Route::put('/tasks/{task}/toggle', [ApiTaskController::class, 'toggleStatus'])->name('api.tasks.toggle');
+    Route::get('/tasks', [ApiTaskController::class, 'index'])->name('api.tasks.index');
 });
